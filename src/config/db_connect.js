@@ -1,14 +1,11 @@
-// db.js
-import mongoose from 'mongoose';
+import dotenv from 'dotenv';
+dotenv.config();
 
-const connectDB = async () => {
-  try {
-    await mongoose.connect('mongodb://localhost:27017/medical_inventory');
-    console.log('MongoDB connected');
-  } catch (err) {
-    console.error('MongoDB connection error:', err);
-    process.exit(1);
-  }
+export default {
+    HOST: process.env.DB_HOST,
+    USER: process.env.DB_USER,
+    PASSWORD: process.env.DB_PASSWORD,
+    DB: process.env.DB_NAME,
+    PORT: process.env.DB_PORT,
+    dialect: "mysql"
 };
-
-export default connectDB;
