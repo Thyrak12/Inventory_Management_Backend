@@ -1,5 +1,7 @@
 export default (sequelize, DataTypes) =>
-    sequelize.define('Teacher', {
+    sequelize.define('User', {
         name: DataTypes.STRING,
-        department: DataTypes.STRING
+        email: DataTypes.STRING,
+        password: DataTypes.STRING,
+        role: DataTypes.ENUM('admin', 'staff')
     });

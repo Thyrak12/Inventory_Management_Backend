@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) =>
-    sequelize.define('Student', {
-        name: DataTypes.STRING,
-        email: DataTypes.STRING
+    sequelize.define('Sales', {
+        status: DataTypes.enum('pending', 'completed', 'cancelled'),
+        total_price: DataTypes.decimal(10, 2)
     });

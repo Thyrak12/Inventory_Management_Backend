@@ -1,5 +1,6 @@
 export default (sequelize, DataTypes) =>
-    sequelize.define('Course', {
-        title: DataTypes.STRING,
-        description: DataTypes.STRING
+    sequelize.define('Product', {
+        name: DataTypes.STRING,
+        description: DataTypes.STRING,
+        category: DataTypes.STRING
     });
