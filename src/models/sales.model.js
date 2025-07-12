@@ -1,5 +1,5 @@
 export default (sequelize, DataTypes) =>
     sequelize.define('Sales', {
-        status: DataTypes.enum('pending', 'completed', 'cancelled'),
-        total_price: DataTypes.decimal(10, 2)
+        status: DataTypes.ENUM('pending', 'completed', 'cancelled'),
+        total_price: DataTypes.DECIMAL(10, 2)
     });

@@ -1,7 +1,7 @@
 export default (sequelize, DataTypes) =>
-    sequelize.define('Product', {
+    sequelize.define('Product_Variant', {
         color: DataTypes.STRING,
         size: DataTypes.STRING,
-        price: DataTypes.decimal(10, 2),
+        price: DataTypes.DECIMAL(10, 2),
         stock: DataTypes.INTEGER
     });
