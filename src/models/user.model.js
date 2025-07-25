@@ -9,10 +9,19 @@ const UserModel = (sequelize) => {
             unique: true,
             validate: { isEmail: true },
         },
+        name : {
+            type: DataTypes.STRING,
+            allowNull: false,
+        },
         password: {
             type: DataTypes.STRING,
             allowNull: false,
         },
+        role : {
+            type: DataTypes.ENUM('admin', 'user'),
+            allowNull: false,
+            defaultValue: 'user',
+        }
     });
 
     User.beforeCreate(async (user) => {
