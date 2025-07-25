@@ -1,207 +1,133 @@
+
 import db from '../models/index.js';
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
 
 /**
  * @swagger
  * tags:
- *   name: Users
- *   description: User management
+ *   name: Auth
+ *   description: Authentication routes
  */
+
 
 /**
  * @swagger
- * /users:
- *   get:
- *     summary: Get all users
- *     tags: [Users]
- *     parameters:
- *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
- *         description: Page number
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 10 }
- *         description: Number of items per page
- *       - in: query
- *         name: sort
- *         schema: { type: string, enum: ['asc', 'desc'], default: 'asc' }
- *         description: Sort order
- *       - in: query
- *         name: sortField
- *         schema: { type: string, enum: ['id', 'createdAt', 'updatedAt'], default: 'createdAt' }
- *         description: Sort by field
- *     responses:
- *       200:
- *         description: List of users
- *       500:
- *         description: Internal server error
- */
-
-const getAllUsers = async (req, res) => {
-    try {
-        const users = await db.User.findAll();
-        return res.status(200).json(users);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while fetching users.' });
-    }
-}
-
-/**
- * @swagger
- * /users/{id}:
- *   get:
- *     summary: Get a user by ID
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
- *     responses:
- *       200:
- *         description: User found
- *       404:
- *         description: Not found
- */
-
-const getUserById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const user = await db.User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
-        }
-        return res.status(200).json(user);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while fetching the user.' });
-    }
-}
-
-/**
- * @swagger
- * /users:
+ * /auth/register:
  *   post:
- *     summary: Create a new user
- *     tags: [Users]
+ *     summary: Register a new user
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, email, password]
+ *             required: [email, password]
  *             properties:
- *               name:
- *                 type: string
  *               email:
  *                 type: string
+ *                 format: email
  *               password:
  *                 type: string
+ *                 format: password
  *     responses:
  *       201:
  *         description: User created
- *       500:
- *         description: Internal server error
+ *       400:
+ *         description: Email already exists
  */
+export const registerUser = async (req, res) => {
+    const { email, password } = req.body;
 
-const createUser = async (req, res) => {
-    const { name, email, password } = req.body;
     try {
-        const newUser = await db.User.create({ name, email, password });
-        return res.status(201).json(newUser);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while creating the user.' });
+        const exists = await db.User.findOne({ where: { email } });
+        if (exists) return res.status(400).json({ error: 'Email already registered' });
+
+        const user = await db.User.create({ email, password });
+        res.status(201).json({ message: 'User registered', user: { id: user.id, email: user.email } });
+    } catch (err) {
+        res.status(500).json({ error: 'Registration error', details: err.message });
     }
-}
+};
+
 
 /**
  * @swagger
- * /users/{id}:
- *   put:
- *     summary: Update a user
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
+ * /auth/login:
+ *   post:
+ *     summary: Login a user
+ *     tags: [Auth]
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required: [name, email, password]
+ *             required: [email, password]
  *             properties:
- *               name:
- *                 type: string
  *               email:
  *                 type: string
+ *                 format: email
  *               password:
  *                 type: string
+ *                 format: password
  *     responses:
  *       200:
- *         description: User updated
+ *         description: Successful login
+ *       401:
+ *         description: Invalid credentials
  *       404:
- *         description: Not found
+ *         description: User not found
  */
+export const loginUser = async (req, res) => {
+    const { email, password } = req.body;
 
-const updateUser = async (req, res) => {
-    const { id } = req.params;
-    const { name, email, password } = req.body;
     try {
-        const user = await db.User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
-        }
-        user.name = name;
-        user.email = email;
-        user.password = password;
-        await user.save();
-        return res.status(200).json(user);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while updating the user.' });
+        const user = await db.User.findOne({ where: { email } });
+        if (!user) return res.status(404).json({ error: 'User not found' });
+
+        const match = await bcrypt.compare(password, user.password);
+        if (!match) return res.status(401).json({ error: 'Invalid credentials' });
+        // jwt.sign(payload,signature,option)
+        const token = jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+            expiresIn: '1d',
+        });
+
+        res.json({ token, user: { id: user.id, email: user.email } });
+    } catch (err) {
+        res.status(500).json({ error: 'Login error', details: err.message });
     }
-}
+};
 
 /**
  * @swagger
- * /users/{id}:
- *   delete:
- *     summary: Delete a user
- *     tags: [Users]
- *     parameters:
- *       - in: path
- *         name: id
- *         required: true
- *         schema: { type: integer }
+ * /auth/users:
+ *   get:
+ *     summary: Get list of all users (protected)
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: User deleted
- *       404:
- *         description: Not found
+ *         description: List of users
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
  */
 
-const deleteUser = async (req, res) => {
-    const { id } = req.params;
+export const getAllUsers = async (req, res) => {
     try {
-        const user = await db.User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found.' });
-        }
-        await user.destroy();
-        return res.status(204).send();
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while deleting the user.' });
+        const users = await db.User.findAll({ attributes: ['id', 'email'] });
+        res.json(users);
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to fetch users' });
     }
-}
-
-const userController = {
-    getAllUsers,
-    getUserById,
-    createUser,
-    updateUser,
-    deleteUser
 };
 
-export default userController;
+const user_controller = {
+    registerUser,
+    loginUser,
+    getAllUsers
+};
+
+export default user_controller;
