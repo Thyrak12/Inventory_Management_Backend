@@ -1,4 +1,42 @@
 import db from '../models/index.js';
+
+/**
+ * @swagger
+ * tags:
+ *   name: Sales Records
+ *   description: Sales record management
+ */
+/**
+ * @swagger
+ * /sales-records:
+ *   get:
+ *     summary: Get all sales records
+ *     tags: [Sales Records]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *         description: Number of items per page
+ *       - in: query
+ *         name: sort
+ *         schema: { type: string, enum: ['asc', 'desc'], default: 'asc' }
+ *         description: Sort order
+ *       - in: query
+ *         name: sortField
+ *         schema: { type: string, enum: ['id', 'createdAt', 'updatedAt'], default: 'createdAt' }
+ *         description: Sort by field
+ *     responses:
+ *       200:
+ *         description: List of sales records
+ */
+
+
+
+
 const getAllSalesRecords = async (req, res) => {
     try {
         const salesRecords = await db.SalesRecord.findAll({
@@ -12,6 +50,25 @@ const getAllSalesRecords = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while fetching sales records.' });
     }
 }
+
+/**
+ * @swagger
+ * /sales-records/{id}:
+ *   get:
+ *     summary: Get a sales record by ID
+ *     tags: [Sales Records]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Sales record found
+ *       404:
+ *         description: Not found
+ */
+
 const getSalesRecordById = async (req, res) => {
     const { id } = req.params;
     try {
@@ -29,6 +86,36 @@ const getSalesRecordById = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while fetching the sales record.' });
     }
 }
+
+/**
+ * @swagger
+ * /sales-records:
+ *   post:
+ *     summary: Create a new sales record
+ *     tags: [Sales Records]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [sales_id, product_variant_id, quantity, price]
+ *             properties:
+ *               sales_id:
+ *                 type: integer
+ *               product_variant_id:
+ *                 type: integer
+ *               quantity:
+ *                 type: integer
+ *               price:
+ *                 type: number
+ *     responses:
+ *       201:
+ *         description: Sales record created
+ *       500:
+ *         description: Internal server error
+ */
+
 const createSalesRecord = async (req, res) => {
     const { sales_id, product_variant_id, quantity, price } = req.body;
     try {
@@ -38,6 +125,41 @@ const createSalesRecord = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while creating the sales record.' });
     }
 }
+
+/**
+ * @swagger
+ * /sales-records/{id}:
+ *   put:
+ *     summary: Update a sales record
+ *     tags: [Sales Records]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [sales_id, product_variant_id, quantity, price]
+ *             properties:
+ *               sales_id:
+ *                 type: integer
+ *               product_variant_id:
+ *                 type: integer
+ *               quantity:
+ *                 type: integer
+ *               price:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: Sales record updated
+ *       404:
+ *         description: Not found
+ */
+
 const updateSalesRecord = async (req, res) => {
     const { id } = req.params;
     const { sales_id, product_variant_id, quantity, price } = req.body;
@@ -56,6 +178,26 @@ const updateSalesRecord = async (req, res) => {
         return res.status(500).json({ error: 'An error occurred while updating the sales record.' });
     }
 }
+
+/**
+ * @swagger
+ * /sales-records/{id}:
+ *   delete:
+ *     summary: Delete a sales record
+ *     tags: [Sales Records]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Sales record deleted
+ *       404:
+ *         description: Not found
+ */
+
+
 const deleteSalesRecord = async (req, res) => {
     const { id } = req.params;
     try {
