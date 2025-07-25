@@ -1,16 +1,15 @@
+import { authenticateToken } from '../middleware/auth.js';
 import {Router} from 'express';
 
-const salesRecordRoutes = (controller) => {
+const userRoutes = (controller) => {
     const routes = Router();
 
-    // Define routes for sales records
-    routes.get("/", controller.getAllUsers);
-    routes.get("/:id", controller.getUserById);
-    routes.post("/", controller.createUser);
-    routes.put("/:id", controller.updateUser);
-    routes.delete("/:id", controller.deleteUser);
+    // Define routes for user management
+    routes.post("/register", controller.registerUser);
+    routes.post("/login", controller.loginUser);
+    routes.get("/users", authenticateToken, controller.getAllUsers);
 
     return routes;
 }
 
-export default salesRecordRoutes;
+export default userRoutes;
