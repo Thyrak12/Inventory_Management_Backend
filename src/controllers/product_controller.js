@@ -1,68 +1,188 @@
 import db from '../models/index.js';
-const getAllProducts = async (req, res) => {
-    try {
-        const products = await db.Product.findAll();
-        return res.status(200).json(products);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while fetching products.' });
-    }
-}
 
-const getProductById = async (req, res) => {
-    const { id } = req.params;
-    try {
-        const product = await db.Product.findByPk(id);
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found.' });
-        }
-        return res.status(200).json(product);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while fetching the product.' });
-    }
-}
+/**
+ * @swagger
+ * tags:
+ *   name: Products
+ *   description: Product management
+ */
 
-const createProduct = async (req, res) => {
-    const { name, description, category } = req.body;
+/**
+ * @swagger
+ * /products:   
+ *   get:
+ *     summary: Get all products
+ *     tags: [Products]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *         description: Page number
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *         description: Number of items per page
+ *       - in: query
+ *         name: sort
+ *         required: false
+ *         description: Type of sorting
+ *         schema: { type: string, enum: ['asc', 'desc'], default: 'asc' }
+ *       - in: query
+ *         name: sortField
+ *         required: false
+ *         description: Sort by field
+ *         schema: { type: string, enum: ['id','title','createdAt', 'updatedAt'], default: 'createdAt' }
+ *     responses:
+ *       200:
+ *         description: List of courses
+ */
+export const getAllProducts = async (req, res) => {
+    const limit = parseInt(req.query.limit) || 10;
+    const page = parseInt(req.query.page) || 1;
+    const sort = req.query.sort === 'desc' ? 'DESC' : 'ASC'; // default to ASC if not provided
+    const sortField = req.query.sortField || 'createdAt'; // default to createdAt if not provided
     try {
-        const newProduct = await db.Product.create({ name, description, category });
-        return res.status(201).json(newProduct);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while creating the product.' });
-    }
-}
+        const total = await db.Product.count();
 
-const updateProduct = async (req, res) => {
-    const { id } = req.params;
-    const { name, description, category } = req.body;
-    try {
-        const product = await db.Product.findByPk(id);
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found.' });
-        }
-        product.name = name;
-        product.description = description;
-        product.category = category;
-        await product.save();
-        return res.status(200).json(product);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while updating the product.' });
-    }
-}
+        const products = await db.Product.findAll({
+            limit: limit,
+            offset: (page - 1) * limit,
+            order: [[sortField, sort]],
+        });
 
-const deleteProduct = async (req, res) => {
-    const { id } = req.params;
+        res.json({
+            meta: {
+                totalItems: total,
+                page: page,
+                totalPages: Math.ceil(total / limit),
+            },
+            data: products,
+        });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+/**
+ * @swagger
+ * /products/{id}:
+ *   get:
+ *     summary: Get a product by ID
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Product found
+ *       404:
+ *         description: Not found
+ */
+export const getProductById = async (req, res) => {
     try {
-        const product = await db.Product.findByPk(id);
-        if (!product) {
-            return res.status(404).json({ error: 'Product not found.' });
-        }
+        const product = await db.Product.findByPk(req.params.id, { include: db.Category });
+        if (!product) return res.status(404).json({ message: 'Not found' });
+        res.json(product);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * @swagger
+ * /products:
+ *   post:
+ *     summary: Create a new product
+ *     tags: [Products]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [name, category]
+ *             properties:
+ *               name:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       201:
+ *         description: Product created
+ */
+export const createProduct = async (req, res) => {
+    try {
+        const product = await db.Product.create(req.body);
+        res.status(201).json(product);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
+/**
+ * @swagger
+ * /products/{id}:
+ *   put:
+ *     summary: Update a product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               name:
+ *                 type: string
+ *               category:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: Updated
+ */
+export const updateProduct = async (req, res) => {
+    try {
+        const product = await db.Product.findByPk(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Not found' });
+        await product.update(req.body);
+        res.json(product);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+/**
+ * @swagger
+ * /products/{id}:
+ *   delete:
+ *     summary: Delete a product
+ *     tags: [Products]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema: { type: integer }
+ *     responses:
+ *       200:
+ *         description: Deleted
+ */
+export const deleteProduct = async (req, res) => {
+    try {
+        const product = await db.Product.findByPk(req.params.id);
+        if (!product) return res.status(404).json({ message: 'Not found' });
         await product.destroy();
-        return res.status(204).send();
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while deleting the product.' });
+        res.json({ message: 'Deleted' });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-}
-
+};
 const productController = {
     getAllProducts,
     getProductById,
