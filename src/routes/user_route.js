@@ -8,6 +8,8 @@ const userRoutes = (controller) => {
     routes.post("/register", controller.registerUser);
     routes.post("/login", controller.loginUser);
     routes.get("/users", authenticateToken, controller.getAllUsers);
+    routes.put("/users/:id", authenticateToken, controller.updateUser);
+    routes.delete("/users/:id", authenticateToken, controller.deleteUser);
 
     return routes;
 }
