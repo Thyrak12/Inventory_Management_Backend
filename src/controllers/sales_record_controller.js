@@ -33,23 +33,65 @@ import db from '../models/index.js';
  *       200:
  *         description: List of sales records
  */
-
-
-
-
 const getAllSalesRecords = async (req, res) => {
-    try {
-        const salesRecords = await db.SalesRecord.findAll({
-            include: [
-                { model: db.Sales, as: 'sales' },
-                { model: db.ProductVariant, as: 'productVariant' }
-            ]
-        });
-        return res.status(200).json(salesRecords);
-    } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while fetching sales records.' });
-    }
-}
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const offset = (page - 1) * limit;
+
+    const allowedSortFields = ['id', 'createdAt', 'updatedAt'];
+    const allowedSortOrders = ['asc', 'desc'];
+
+    const sortField = allowedSortFields.includes(req.query.sortField) ? req.query.sortField : 'createdAt';
+    const sortOrder = allowedSortOrders.includes((req.query.sort || '').toLowerCase()) ? req.query.sort.toUpperCase() : 'ASC';
+
+    const { count, rows } = await db.SalesRecord.findAndCountAll({
+      limit,
+      offset,
+      order: [[sortField, sortOrder]],
+      include: [
+        {
+          model: db.ProductVariant,
+          as: 'productVariant',
+          attributes: ['id', 'color', 'size'],
+          include: [
+            {
+              model: db.Product,
+              attributes: ['name'],
+            }
+          ]
+        },
+        {
+          model: db.Sales,
+          as: 'sales',
+          attributes: ['createdAt'],  // Include only createdAt from Sales
+        }
+      ]
+    });
+
+    // Flatten product name and sales createdAt
+    const data = rows.map(row => {
+      const json = row.toJSON();
+      return {
+        ...json,
+        name: json.productVariant?.product?.name || null,
+        saleCreatedAt: json.sales?.createdAt || null,
+      };
+    });
+
+    return res.status(200).json({
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      data,
+    });
+
+  } catch (error) {
+    console.error("🔥 Error fetching sales records:", error);
+    return res.status(500).json({ error: error.message || 'An error occurred while fetching sales records.' });
+  }
+};
+
 
 /**
  * @swagger
