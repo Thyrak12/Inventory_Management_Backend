@@ -34,12 +34,36 @@ import db from '../models/index.js';
  */
 const getAllProductVariants = async (req, res) => {
     try {
-        const productVariants = await db.ProductVariant.findAll();
-        return res.status(200).json(productVariants);
+        const productVariants = await db.ProductVariant.findAll({
+            include: [
+                {
+                    model: db.Product,
+                    attributes: ['name'], // Only get 'name'
+                }
+            ],
+            raw: true,
+            nest: true
+        });
+
+        // Flatten and rename `Product.name` to just `name`
+        const formatted = productVariants.map(variant => {
+            const { Product, ...rest } = variant;
+            return {
+                ...rest,
+                name: Product?.name || null, // flatten product name as 'name'
+            };
+        });
+
+        return res.status(200).json(formatted);
     } catch (error) {
-        return res.status(500).json({ error: 'An error occurred while fetching product variants.' });
+        console.error(error);
+        return res.status(500).json({
+            error: 'An error occurred while fetching product variants.',
+        });
     }
 };
+
+
 
 /**
  * @swagger

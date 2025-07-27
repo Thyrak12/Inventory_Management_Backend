@@ -14,6 +14,15 @@
   "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
+=======
+<<<<<<< HEAD
+    "cors": "^2.8.5",
+=======
+<<<<<<< HEAD
+    "dotenv": "^17.0.0",
+=======
+>>>>>>> c08db903664b6e71375ee06a5e97f300bd829057
+>>>>>>> 12b5ad7e4d6d3d235523b242e2939fb4f4acf8d0
     "dotenv": "^17.2.0",
     "express": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
