@@ -9,6 +9,10 @@ const options = {
       version: '1.0.0',
       description: 'API for managing inventory, stock, user, and sales',
     },
+    tags: [
+      { name: 'Auth', description: 'Authentication operations' },
+    ],
+
     components: {
       securitySchemes: {
         bearerAuth: {
