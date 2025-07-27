@@ -11,7 +11,7 @@ import db from '../models/index.js';
  * @swagger
  * /products:   
  *   get:
- *     summary: Get all products
+ *     summary: Get all products with pagination and sorting
  *     tags: [Products]
  *     parameters:
  *       - in: query
@@ -25,28 +25,45 @@ import db from '../models/index.js';
  *       - in: query
  *         name: sort
  *         required: false
- *         description: Type of sorting
+ *         description: Sort order
  *         schema: { type: string, enum: ['asc', 'desc'], default: 'asc' }
  *       - in: query
  *         name: sortField
  *         required: false
- *         description: Sort by field
- *         schema: { type: string, enum: ['id','title','createdAt', 'updatedAt'], default: 'createdAt' }
+ *         description: Field to sort by
+ *         schema: { type: string, enum: ['id', 'title', 'createdAt', 'updatedAt'], default: 'createdAt' }
  *     responses:
  *       200:
- *         description: List of courses
+ *         description: List of products with pagination metadata
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 meta:
+ *                   type: object
+ *                   properties:
+ *                     totalItems: { type: integer }
+ *                     page: { type: integer }
+ *                     totalPages: { type: integer }
+ *                 data:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Product'
  */
 export const getAllProducts = async (req, res) => {
-    const limit = parseInt(req.query.limit) || 10;
-    const page = parseInt(req.query.page) || 1;
-    const sort = req.query.sort === 'desc' ? 'DESC' : 'ASC'; // default to ASC if not provided
-    const sortField = req.query.sortField || 'createdAt'; // default to createdAt if not provided
+    // Parse and validate query params
+    const limit = Math.max(parseInt(req.query.limit) || 10, 1);
+    const page = Math.max(parseInt(req.query.page) || 1, 1);
+    const sort = req.query.sort === 'desc' ? 'DESC' : 'ASC';
+    const sortField = req.query.sortField || 'createdAt';
+
     try {
         const total = await db.Product.count();
 
         const products = await db.Product.findAll({
             limit: limit,
-            offset: (page - 1) * limit,
+            offset: (page - 1) * limit, // Calculate pagination offset
             order: [[sortField, sort]],
         });
 
@@ -62,6 +79,7 @@ export const getAllProducts = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+
 /**
  * @swagger
  * /products/{id}:

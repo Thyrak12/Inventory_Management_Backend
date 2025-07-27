@@ -25,7 +25,7 @@ async function seed() {
       const product = await db.Product.create({
         name: faker.commerce.productName(),
         description: faker.commerce.productDescription(),
-        category: faker.commerce.department(),
+        category: faker.helpers.arrayElement(['Shirt', 'Shoe', 'Pant']),
       });
       products.push(product);
     }
