@@ -201,12 +201,47 @@ export const deleteProduct = async (req, res) => {
         res.status(500).json({ error: err.message });
     }
 };
+/**
+ * @swagger
+ * /products/categories:
+ *   get:
+ *     summary: Get unique product categories
+ *     tags: [Products]
+ *     responses:
+ *       200:
+ *         description: List of unique product categories
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: string
+ */
+export const getProductCategories = async (req, res) => {
+    try {
+        const categories = await db.Product.findAll({
+            attributes: [
+                [db.Sequelize.fn('DISTINCT', db.Sequelize.col('category')), 'category']
+            ],
+            raw: true,
+        });
+
+        const categoryList = categories.map(c => c.category);
+        res.json(categoryList);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+};
+
+
 const productController = {
     getAllProducts,
     getProductById,
     createProduct,
     updateProduct,
-    deleteProduct
+    deleteProduct,
+    getProductCategories // ✅ Add this line
 };
+
 
 export default productController;
