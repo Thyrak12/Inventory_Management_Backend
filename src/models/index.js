@@ -32,17 +32,17 @@ db.Sales.belongsTo(db.User, { foreignKey: 'user_id' });
 db.User.hasMany(db.StockTransaction, { foreignKey: 'user_id' });
 db.StockTransaction.belongsTo(db.User, { foreignKey: 'user_id' });
 
-db.ProductVariant.belongsTo(db.Product, { foreignKey: 'product_id' });
+db.ProductVariant.belongsTo(db.Product, { foreignKey: 'product_id'});
 db.Product.hasMany(db.ProductVariant, { foreignKey: 'product_id' });
 
-db.ProductVariant.hasMany(db.SalesRecord, { foreignKey: 'product_variant_id' });
-db.SalesRecord.belongsTo(db.ProductVariant, { foreignKey: 'product_variant_id' });
+db.ProductVariant.hasMany(db.SalesRecord, { foreignKey: 'product_variant_id' , as: 'salesRecords',});
+db.SalesRecord.belongsTo(db.ProductVariant, { foreignKey: 'product_variant_id' , as: 'productVariant',});
 
 db.ProductVariant.hasMany(db.StockTransaction, { foreignKey: 'product_variant_id' });
 db.StockTransaction.belongsTo(db.ProductVariant, { foreignKey: 'product_variant_id' });
 
 db.Sales.hasMany(db.SalesRecord, { foreignKey: 'sales_id' });
-db.SalesRecord.belongsTo(db.Sales, { foreignKey: 'sales_id' });
+db.SalesRecord.belongsTo(db.Sales, { foreignKey: 'sales_id' , as : 'sales',});
 
 await sequelize.sync({ alter: true }); // dev only
 
